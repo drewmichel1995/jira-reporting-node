@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  client:
+    container_name: jira-report-client
+    build: ./client
+    expose:
+      - 3000
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    restart: always
+    command: "npm run start:client"
+    volumes:
+      - ./client/src:/srv/app/client/src
+      - ./client/public:/srv/app/client/public
+
+  server:
+    container_name: jira-report-server
+    build: ./server
+    expose:
+      - 3000
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./server:/srv/app/server
+      - /srv/app/server/node_modules/
+    restart: always
+    command: "npm run start:server"
+
+  proxy:
+    container_name: jira-report-proxy
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/nginx.conf
+      - ./proxy/certs:/etc/nginx/certs

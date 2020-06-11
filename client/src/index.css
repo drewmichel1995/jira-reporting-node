@@ -1,0 +1,117 @@
+* {
+  box-sizing: border-box;
+}
+
+.content {
+  justify-content: center;
+  padding-top: 20px;
+  top: 60px !important;
+}
+
+body {
+  background-color: black !important;
+}
+
+.dropdown-toggle {
+  color: gainsboro;
+  padding: 0px !important;
+}
+
+.dropdown-toggle:hover {
+  color: grey;
+}
+
+.license-navbar {
+  justify-content: center;
+}
+
+.editing {
+  color: yellow;
+}
+
+.noshow {
+  visibility: hidden;
+  height: 0;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.success-body {
+  background-color: mediumseagreen;
+  color: black;
+}
+
+.success-header {
+  background-color: darkseagreen !important;
+  color: white !important;
+  border-bottom: 1px solid darkgreen !important;
+}
+
+.error-body {
+  background-color: lightsalmon;
+  color: black;
+}
+
+.error-header {
+  background-color: crimson !important;
+  color: white !important;
+  border-bottom: 1px solid darkgreen !important;
+}
+
+.error-modal-body {
+  background-color: gainsboro;
+  color: black;
+  align-items: center !important;
+}
+
+.error-modal-header {
+  background-color: black !important;
+  color: white !important;
+  justify-content: center !important;
+}
+
+.error-modal-footer {
+  background-color: black !important;
+  color: white !important;
+  padding: 5px !important;
+  justify-content: center !important;
+}
+
+.confirm-modal-header,
+.confirm-modal-footer {
+  background-color: black !important;
+  color: white !important;
+  padding: 5px !important;
+  justify-content: center !important;
+}
+
+.modal-button {
+  padding: 0.125rem 0.25rem !important;
+}
+
+.toast-image {
+  padding-right: 5px;
+}
+
+.first-col {
+  width: 73px !important;
+  text-align: center;
+  border-right: solid black !important;
+}
+
+.show {
+  display: flex !important;
+}
+
+@media all and (min-width: 480px) {
+  .Login {
+    padding: 60px 0;
+  }
+
+  .Login form {
+    margin: 0 auto;
+    max-width: 320px;
+  }
+}
