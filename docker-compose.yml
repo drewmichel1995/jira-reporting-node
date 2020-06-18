@@ -31,8 +31,7 @@ services:
     container_name: jira-report-proxy
     image: nginx:latest
     ports:
-      - "80:80"
-      - "443:443"
+      - "8081:80"
     restart: always
     volumes:
       - ./proxy/nginx.conf:/etc/nginx/nginx.conf
