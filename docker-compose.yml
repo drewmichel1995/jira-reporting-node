@@ -21,11 +21,11 @@ services:
       - 3000
     environment:
       - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - ./server:/srv/app/server
-      - /srv/app/server/node_modules/
+#    volumes:
+#      - ./server:/srv/app/server
+#      - /srv/app/server/node_modules/
     restart: always
-    command: "npm run start:server"
+#    command: "npm run start:server"
 
   proxy:
     container_name: jira-report-proxy
