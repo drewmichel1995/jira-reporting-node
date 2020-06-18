@@ -28,10 +28,14 @@ process.on('SIGINT', function onSigint() {
     process.exit();
   };
 
-
-  cron.schedule("01 10 * * 1", function() {
+  //"0 10 * * 1"
+  cron.schedule("0 10 * * 1", function() {
     console.log("---------------------");
-    console.log("Running Cron Job");
+    console.log("Running Weekly Reporting Cron Job");
+    report.getWeeklyReport().then(response => {
+        console.log("Weekly Reporting Cron Job Finished");
+        console.log("---------------------");
+    })
     report.getWeeklyReport();
   });
 

@@ -9,36 +9,43 @@ const moment = require('moment');
 
 
 const getWeeklyReport = () => {
-    var filter = ' AND (issuetype="new feature" OR issuetype=improvement OR issuetype=bug) AND Sprint in openSprints()';
-    var projects = ["DETX", "DEXARCH", "DEWORK", "DETWN", "DEONT"];
-    getIssueData(projects, filter).then(response => { 
-      filter = ' AND status="In Progress"';
-      projects = ["DEMGT", "DEINFRA"];
-     getIssueData(projects, filter).then(response2 => {
-       response2.map(r => {
-         response.push(r);
-       })
+    return new Promise((resolve, reject) => { 
+        var filter = ' AND (issuetype="new feature" OR issuetype=improvement OR issuetype=bug) AND Sprint in openSprints()';
+        var projects = ["DETX", "DEXARCH", "DEWORK", "DETWN", "DEONT"];
+        getIssueData(projects, filter).then(response => { 
+          filter = ' AND status="In Progress"';
+          projects = ["DEMGT", "DEINFRA"];
+         getIssueData(projects, filter).then(response2 => {
+           response2.map(r => {
+             response.push(r);
+           })
 
-       filter = ' AND issuetype=epic AND (labels="Pre-B%26P" OR labels="Direct" OR labels = "B%26P") AND status="In Progress"';
-       projects = ["DEDEL"];
-       getEpicData(projects, filter).then(response3 => {
-        response3.map(r => {
-          response.push(r);
-        })
-          executePost(generateReport(response)).then(response4 => {
-            return response4;
-            
-          })
-          
+           filter = ' AND issuetype=epic AND (labels="Pre-B%26P" OR labels="Direct" OR labels = "B%26P") AND status="In Progress"';
+           projects = ["DEDEL"];
+           getEpicData(projects, filter).then(response3 => {
+            response3.map(r => {
+              response.push(r);
+            })
+              executePost(generateReport(response)).then(response4 => {
+                try {
+                    const parsedData = response4;
+                    resolve(parsedData);
+                  } catch (e) {
+                    reject(e.message);
+                  }
+
+              })
+
+            }).catch(error => {
+              console.log(error);
+            });
+         }).catch(error => {
+           console.log(error);
+         });
+
         }).catch(error => {
           console.log(error);
         });
-     }).catch(error => {
-       console.log(error);
-     });
-
-    }).catch(error => {
-      console.log(error);
     });
 }
 
@@ -298,8 +305,13 @@ function executePost(html){
 
       res.on('end', () => {
         try {
-          const parsedData = encodedData;
-          console.log("Report Successfully Posted on " + start.toString());
+          const parsedData = res.statusCode;
+          if(parsedData != 200){
+            console.log("Error Posting Report on " + start.toString());
+          }else{
+            console.log("Report Successfully Posted on " + start.toString());
+          }
+          
           resolve(parsedData);
         } catch (e) {
           reject(e.message);

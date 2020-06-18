@@ -5,9 +5,9 @@ const report = require("../actors/report");
 router.get('/', async (req, res) => {
   console.log("Recieved Request to Generate Report");
   try {
-    
-    res.status(200).json({message: report.getWeeklyReport()})
-    
+    report.getWeeklyReport().then(response => {
+      res.status(200).json({message: response})
+    })
     
   } catch (err) {
     res.status(500).json({ message: err.message });
