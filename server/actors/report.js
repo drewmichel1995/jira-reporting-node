@@ -1,9 +1,9 @@
 var https = require('https');
-var rootCas = require('ssl-root-cas').create();
-rootCas.addFile('/server/certs/devops.saicwebhost.net.chained.crt');
+//var rootCas = require('ssl-root-cas').create();
+//rootCas.addFile('/server/certs/devops.saicwebhost.net.chained.crt');
 // default for all https requests
 // (whether using https directly, request, or another module)
-require('https').globalAgent.options.ca = rootCas;
+//require('https').globalAgent.options.ca = rootCas;
 
 const moment = require('moment');
 
