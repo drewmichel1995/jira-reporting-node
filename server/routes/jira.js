@@ -14,4 +14,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/DEDEL', async (req, res) => {
+  console.log("Recieved Request to Generate Report");
+  try {
+    report.getDEDEL().then(response => {
+      res.status(200).json({message: response})
+    })
+    
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
 module.exports = router;

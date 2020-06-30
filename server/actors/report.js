@@ -1,9 +1,10 @@
 var https = require('https');
-//var rootCas = require('ssl-root-cas').create();
-//rootCas.addFile('/server/certs/devops.saicwebhost.net.chained.crt');
+var rootCas = require('ssl-root-cas').create();
+rootCas.addFile('/server/certs/devops.saicwebhost.net.chained.crt');
 // default for all https requests
 // (whether using https directly, request, or another module)
-//require('https').globalAgent.options.ca = rootCas;
+require('https').globalAgent.options.ca = rootCas;
+const querystring = require('querystring');
 
 const moment = require('moment');
 
@@ -20,13 +21,21 @@ const getWeeklyReport = () => {
              response.push(r);
            })
 
-           filter = ' AND issuetype=epic AND (labels="Pre-B%26P" OR labels="Direct" OR labels = "B%26P") AND status="In Progress"';
+           filter = ' AND issuetype=epic AND status="In Progress"';
            projects = ["DEDEL"];
            getEpicData(projects, filter).then(response3 => {
-            response3.map(r => {
-              response.push(r);
-            })
-              executePost(generateReport(response)).then(response4 => {
+            var temp = response3;
+            
+           
+            response3.issues = response3.issues.filter(function(i){ return (i.labels.includes("B&P") || i.labels.includes("Pre-B&P") || i.labels.includes("Direct")); });
+            console.log("Before DEDEL Sort: " + response3.issues.length);
+            response3 = sortDEDEL(response3);
+            console.log("After DEDEL Sort: " + response3.issues.length);
+            response.push(response3);
+            
+            var sorted = sortReport(response);
+
+              executePost(generateReport(sorted)).then(response4 => {
                 try {
                     const parsedData = response4;
                     resolve(parsedData);
@@ -49,6 +58,106 @@ const getWeeklyReport = () => {
     });
 }
 
+function sortDEDEL(data){
+  var sorted = [];
+
+  data.issues.map(i => {
+    if(i.labels.includes("B&P") && !i.labels.includes("Pre-B&P") && !i.labels.includes("Direct")) sorted.push(i);
+  })
+
+  data.issues.map(i => {
+    if(i.labels.includes("Pre-B&P") && i.labels.includes("B&P")) sorted.push(i);
+  })
+
+  data.issues.map(i => {
+    if(i.labels.includes("Pre-B&P") && !i.labels.includes("Direct") && !i.labels.includes("B&P")) sorted.push(i);
+  })
+
+  data.issues.map(i => {
+    if(i.labels.includes("B&P") && i.labels.includes("Direct")) sorted.push(i);
+  })
+
+  data.issues.map(i => {
+    if(i.labels.includes("Pre-B&P") && i.labels.includes("Direct")) sorted.push(i);
+  })
+
+  data.issues.map(i => {
+    if(i.labels.includes("Direct") && !i.labels.includes("B&P") && !i.labels.includes("Pre-B&P")) sorted.push(i);
+  })
+
+  data.issues.map(i => {
+    if(i.labels.includes("Direct") && i.labels.includes("B&P") && i.labels.includes("Pre-B&P")) sorted.push(i);
+  })
+
+  data.issues = sorted;
+
+  return data;
+}
+
+function sortReport(data){
+  var sorted = [];
+
+  data.map(d => {
+    if(d.key === "DEMGT") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DEINFRA") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DEWORK") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DETX") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DEXARCH") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DEONT") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DETWN") sorted.push(d);
+  })
+
+  data.map(d => {
+    if(d.key === "DEDEL") sorted.push(d);
+  })
+
+  sorted.map(s => {
+    s.issues.reverse();
+    if(s.key === "DEDEL"){
+      s.issues.map(i => {
+        if(i.issues != null){
+          i.issues.reverse();
+        }
+      })
+    }
+  })
+
+  return sorted;
+}
+
+const getDEDEL = () => {
+  return new Promise((resolve, reject) => { 
+    filter = ' AND issuetype=epic AND status="In Progress"';
+    projects = ["DEDEL"];
+    getEpicData(projects, filter).then(response3 => {
+      try {
+        const parsedData = response3;
+        resolve(parsedData);
+      } catch (e) {
+        reject(e.message);
+      }
+    });
+  });
+}
+
 function getIssueData(projects, filter){
   return new Promise((resolve, reject) => { 
     getProjects(projects, filter).then(response => {
@@ -61,39 +170,41 @@ function getIssueData(projects, filter){
       }
       response.map((r,j) => {
         r.issues.map((issue, k) => {
-          var path = '/rest/api/latest/issue/' + issue.key + '?fields=comment,summary,status,assignee';
-          var comments = [];
-          count++;
-          executeGet(path).then(response2 => {
-            
-            issue.summary = response2.fields.summary;
-            issue.status = response2.fields.status.name;
-            response2.fields.assignee != null ? issue.assignee = response2.fields.assignee.displayName : issue.assignee = "Unassigned";
-            var tempDate = new Date("1980-01-01T13:38:34.206-0500");
-            response2.fields.comment.comments.map((c) => {
-              var comment = {};
-              var cmpDate = new Date(c.updated)
-              if(cmpDate.getTime() > tempDate.getTime()){
-                tempDate = cmpDate;
-                comment.author = c.author.displayName;
-                comment.body = c.body;
-                comment.posted = c.updated;
-                issue.comment = comment;
+          
+            var path = '/rest/api/latest/issue/' + issue.key + '?fields=comment,summary,status,assignee';
+            var comments = [];
+            count++;
+            executeGet(path).then(response2 => {
+              
+              issue.summary = response2.fields.summary;
+              issue.status = response2.fields.status.name;
+              response2.fields.assignee != null ? issue.assignee = response2.fields.assignee.displayName : issue.assignee = "Unassigned";
+              var tempDate = new Date("1980-01-01T13:38:34.206-0500");
+              response2.fields.comment.comments.map((c) => {
+                var comment = {};
+                var cmpDate = new Date(c.updated)
+                if(cmpDate.getTime() > tempDate.getTime()){
+                  tempDate = cmpDate;
+                  comment.author = c.author.displayName;
+                  comment.body = c.body;
+                  comment.posted = c.updated;
+                  issue.comment = comment;
+                }
+              })
+              count--;
+              if(count === 0){
+                try {
+                  const parsedData = response;
+                  resolve(parsedData);
+                } catch (e) {
+                  reject(e.message);
+                }
+              
               }
-            })
-            count--;
-            if(count === 0){
-              try {
-                const parsedData = response;
-                resolve(parsedData);
-              } catch (e) {
-                reject(e.message);
-              }
-            
-            }
-          }).catch(error => {
-            console.log(error);
-          });
+            }).catch(error => {
+              console.log(error);
+            });
+          
         })
       })
     }).catch(error => {
@@ -113,47 +224,49 @@ function getEpicData(projects, filter){
       }
       response.map((r,j) => {
         r.issues.map((issue, k) => {
-          var path = '/rest/api/latest/search?fields=comment,summary,status,assignee&jql=project=DEDEL AND "Epic Link" = ' + issue.key;
-          issue.issues = [];
-          count++;
-          executeGet(path).then(response2 => {
-            response2.issues.map(i => {
-              var tempIssue = {};
-              tempIssue.key = i.key;
-              tempIssue.summary = i.fields.summary;
-              tempIssue.status = i.fields.status.name;
-              i.fields.assignee != null ? tempIssue.assignee = i.fields.assignee.displayName : tempIssue.assignee = "Unassigned";
-              var tempDate = new Date("1980-01-01T13:38:34.206-0500");
-              if(i.fields.comment != null){
-                i.fields.comment.comments.map((c) => {
-                  var comment = {};
-                  var cmpDate = new Date(c.updated)
-                  if(cmpDate.getTime() > tempDate.getTime()){
-                    tempDate = cmpDate;
-                    comment.author = c.author.displayName;
-                    comment.body = c.body;
-                    comment.posted = c.updated;
-                    tempIssue.comment = comment;
-                  }
-                })
-              }
+          if(issue.labels.includes("B&P") || issue.labels.includes("Pre-B&P") || issue.labels.includes("Direct")){
+            var path = '/rest/api/latest/search?fields=comment,summary,status,assignee&jql=project=DEDEL AND status="In Progress" AND "Epic Link" = ' + issue.key;
+            issue.issues = [];
+            count++;
+            executeGet(path).then(response2 => {
+              response2.issues.map(i => {
+                var tempIssue = {};
+                tempIssue.key = i.key;
+                tempIssue.summary = i.fields.summary;
+                tempIssue.status = i.fields.status.name;
+                i.fields.assignee != null ? tempIssue.assignee = i.fields.assignee.displayName : tempIssue.assignee = "Unassigned";
+                var tempDate = new Date("1980-01-01T13:38:34.206-0500");
+                if(i.fields.comment != null){
+                  i.fields.comment.comments.map((c) => {
+                    var comment = {};
+                    var cmpDate = new Date(c.updated)
+                    if(cmpDate.getTime() > tempDate.getTime()){
+                      tempDate = cmpDate;
+                      comment.author = c.author.displayName;
+                      comment.body = c.body;
+                      comment.posted = c.updated;
+                      tempIssue.comment = comment;
+                    }
+                  })
+                }
+
+                issue.issues.push(tempIssue);
+              })
+
+              count--;
+              if(count === 0){
+                try {
+                  const parsedData = response[0];
+                  resolve(parsedData);
+                } catch (e) {
+                  reject(e.message);
+                }
               
-              issue.issues.push(tempIssue);
-            })
-            
-            count--;
-            if(count === 0){
-              try {
-                const parsedData = response;
-                resolve(parsedData);
-              } catch (e) {
-                reject(e.message);
               }
-            
-            }
-          }).catch(error => {
-            console.log(error);
-          });
+            }).catch(error => {
+              console.log(error);
+            });
+          }
         })
       })
     }).catch(error => {
@@ -165,25 +278,28 @@ function getEpicData(projects, filter){
 function getProjects(projects, filter){
   var projectIssues = [];
   var projLength = 0;
-  return new Promise((resolve, reject) => { 
+  return new Promise((resolve, reject) => {
     projects.map((p, j) => {
+      
       var route = '/rest/api/latest/search?';
-      var fields = 'fields=key,project,summary'
+      var fields = 'fields=key,project,summary,labels'
       var query = '&jql=project=' + p + filter;
       var path = route + fields + query;
+      
       projLength++;
+      
       executeGet(path)
           .then(response => {
             var proj = {};
             proj.key = p;
             proj.issues = [];
-
             response.issues.map(issue => {
               proj.name = issue.fields.project.name;
-              proj.issues.push({"key": issue.key, "summary": issue.fields.summary});
+              proj.issues.push({"key": issue.key, "summary": issue.fields.summary, "labels": issue.fields.labels});
             })
             projectIssues.push(proj);
             projLength--;
+            
             if(projLength === 0){
               try {
                 const parsedData = projectIssues;
@@ -204,7 +320,7 @@ function getProjects(projects, filter){
 function executeGet(path){
   
   var options = {
-    hostname: process.env.JIRA_URL,
+    hostname: process.env.JIRA_HOSTNAME,
     path: encodeURI(path),
     port: 443,
     method: 'GET',
@@ -378,7 +494,14 @@ function getDEDELHTML(data){
   var html = "<li><h2><a target='_blank' href='" + process.env.JIRA_URL + "/browse/" + data.key + "'><b>" + data.key + "</b>: " + data.name + "</a></h2><ul style='list-style-type:none;'>";
   
     data.issues.map(issue => {
-      html += "<li><a target='_blank' href='" + process.env.JIRA_URL + "/browse/" + issue.key + "'><h3><b>" + issue.key + "</b>: " + issue.summary + "</h3></a><ul style='list-style-type:none;'>";
+      
+      html += "<li><a target='_blank' href='" + process.env.JIRA_URL + "/browse/" + issue.key + "'><h3><b>" + issue.key + "</b>: " + issue.summary;
+      issue.labels.map(l => {
+        html += " <sup>" + l + "</sup>";
+      })
+      
+      html += "</h3></a><ul style='list-style-type:none;'>";
+      if(issue.issues != null){
       issue.issues.map(i => {
         html += "<li><a target='_blank' href='" + process.env.JIRA_URL + "/browse/" + i.key + "'><b>" + i.key + "</b>: " + i.summary + "</a><ul style='list-style-type:none;'>";
         html+= "<li><b>Assignee</b>: " + i.assignee + " &mdash; <b>Status</b>: " + i.status + "</li>"
@@ -401,6 +524,7 @@ function getDEDELHTML(data){
         }
         html += "<br />";
       })
+    }
       html += "</ul></li>";
     })
     html += "</ul></li>";
@@ -410,3 +534,4 @@ function getDEDELHTML(data){
 }
 
 module.exports.getWeeklyReport = getWeeklyReport;
+module.exports.getDEDEL = getDEDEL;
