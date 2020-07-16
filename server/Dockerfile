@@ -1,17 +1,10 @@
-FROM node:13.5.0-alpine3.11
+FROM node:latest
 
-RUN apk --no-cache add curl
-RUN apk add --update busybox-suid
-RUN mkdir /server && chown -R node:node /server
-
+RUN mkdir -p /server
 WORKDIR /server
 
-COPY --chown=node:node package*.json ./
+COPY . /server
 
-USER node
+RUN npm install
 
-RUN npm install && npm cache clean --force --loglevel=error
-
-COPY --chown=node:node . ./
-
-CMD [ "node", "server.js"]
+CMD ["npm", "start", "server" ]

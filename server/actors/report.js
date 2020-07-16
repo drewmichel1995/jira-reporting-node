@@ -1,5 +1,8 @@
 var https = require('https');
 var rootCas = require('ssl-root-cas').create();
+const fs = require('fs');
+const json2csv = require('json2csv').parse;
+const path = require('path');
 rootCas.addFile('/server/certs/devops.saicwebhost.net.chained.crt');
 // default for all https requests
 // (whether using https directly, request, or another module)
@@ -533,5 +536,153 @@ function getDEDELHTML(data){
   return html;
 }
 
+function getDEDELBPReport(status){
+  var path = '/rest/api/latest/search?fields=customfield_12601,customfield_12606,summary,labels&jql=project=DEDEL AND status="' + status + '" AND issuetype=epic';
+  return new Promise((resolve, reject) => {
+    executeGet(path).then(response => {
+      var issues = [];
+      var count = 0;
+      response.issues.map(i => {
+        
+        if(i.fields.labels.includes("Pre-B&P") || i.fields.labels.includes("B&P")){
+          var issue = {};
+          issue.key = i.key;
+          issue.summary = i.fields.summary;
+          //customfield_12606
+          //customfield_12601
+          issue.oppurtunity_number = i.fields.customfield_12606;
+          issue.oppurtunity_value = i.fields.customfield_12601;
+          if(i.fields.customfield_12601 != null){
+            count = count + i.fields.customfield_12601;
+          }
+          issues.push(issue);
+        }
+      });
+      var spaceRow = {}; spaceRow.key = ""; spaceRow.summary = ""; spaceRow.oppurtunity_number = ""; spaceRow.oppurtunity_value = ""; issues.push(spaceRow);
+      var totalRow = {}; totalRow.key = "TOTAL"; totalRow.summary = ""; totalRow.oppurtunity_number = ""; totalRow.oppurtunity_value = count; issues.push(totalRow);
+
+      try {
+        fields = ["key", "summary", "oppurtunity_number", "oppurtunity_value"];
+        var title = 'DEDEL_PreBP_BP_' + status + '_Oppurtunity_' + moment().toISOString() + '.csv';
+        var ret = writeCSV(issues, fields, title);
+        resolve(ret);
+      } catch (e) {
+        reject(e.message);
+      }
+    });
+  });
+}
+
+function getDEDELDirectReport(status){
+  var path = '/rest/api/latest/search?fields=customfield_11405,customfield_12602,summary,labels&jql=project=DEDEL AND status="' + status + '" AND issuetype=epic';
+  return new Promise((resolve, reject) => {
+    executeGet(path).then(response => {
+      var issues = [];
+      var count = 0;
+      response.issues.map(i => {
+        
+        if(i.fields.labels.includes("Direct")){
+          var issue = {};
+          issue.key = i.key;
+          issue.summary = i.fields.summary;
+          issue.contract_number = i.fields.customfield_11405;
+          issue.contract_value = i.fields.customfield_12602;
+          if(i.fields.customfield_12602 != null){
+            count = count + i.fields.customfield_12602;
+          }
+          issues.push(issue);
+        }
+      });
+      var spaceRow = {}; spaceRow.key = ""; spaceRow.summary = ""; spaceRow.contract_number = ""; spaceRow.contract_value = ""; issues.push(spaceRow);
+      var totalRow = {}; totalRow.key = "TOTAL"; totalRow.summary = ""; totalRow.contract_number = ""; totalRow.contract_value = count; issues.push(totalRow);
+
+      try {
+        fields = ["key", "summary", "contract_number", "contract_value"];
+        var title = 'DEDEL_Direct_' + status + '_Contract_' + moment().toISOString() + '.csv';
+        
+        var ret = writeCSV(issues, fields, title);
+        
+        resolve(ret);
+      } catch (e) {
+        reject(e.message);
+      }
+    });
+  });
+}
+
+function getDEDELCapacityAllocation(){
+  var path = '/rest/api/latest/search?fields=customfield_12603,assignee&jql=project=DEDEL AND issuetype=task';
+  return new Promise((resolve, reject) => {
+    executeGet(path).then(response => {
+      var assignees = [];
+      response.issues.map(i => {
+        var added = false;
+        
+          assignees.map(a => {
+            if(a.name == i.fields.assignee.name){
+              a.capacity += i.fields.customfield_12603;
+              added = true;
+            }
+          })
+
+          if(!added){
+            var assignee = {};
+            assignee.name = i.fields.assignee.name;
+            assignee.displayName = i.fields.assignee.displayName;
+            assignee.capacity = i.fields.customfield_12603;
+            assignees.push(assignee);
+          }
+      });
+
+      try {
+        fields = ["name", "displayName", "capacity"];
+        var title = 'DEDEL_Capacity_Allocation_' + moment().toISOString() + '.csv';
+        
+        var ret = writeCSV(assignees, fields, title);
+        
+        resolve(ret);
+      } catch (e) {
+        reject(e.message);
+      }
+    });
+  });
+}
+
+function writeCSV(data, fields, title){
+  return new Promise((resolve, reject) => {
+      let csv;
+      try {
+        csv = json2csv(data, { fields });
+      } catch (err) {
+        return res.status(500).json({ err });
+      }
+      const filePath = path.join(
+        __dirname,
+        '..',
+        'public',
+        'exports',
+        title
+      );
+      fs.writeFile(filePath, csv, function (err) {
+        if (err) {
+          reject(err.message);
+        } else {
+          setTimeout(function () {
+            fs.unlinkSync(filePath); // delete this file after 30 seconds
+          }, 30000);
+          var ret = {};
+          ret.url = '/exports/' + title;
+          ret.fields = fields;
+          ret.issues = data;
+          ret.title = title;
+          resolve(ret);
+        }
+      });
+    });
+}
+
 module.exports.getWeeklyReport = getWeeklyReport;
 module.exports.getDEDEL = getDEDEL;
+module.exports.getDEDELBPReport = getDEDELBPReport;
+module.exports.getDEDELDirectReport = getDEDELDirectReport;
+module.exports.getDEDELCapacityAllocation = getDEDELCapacityAllocation;
