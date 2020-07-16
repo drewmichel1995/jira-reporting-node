@@ -620,6 +620,10 @@ function getDEDELCapacityAllocation(){
         
           assignees.map(a => {
             if(a.name == i.fields.assignee.name){
+              var task = {};
+              task.key = i.key;
+              task.capacity = i.fields.customfield_12603;
+              a.tasks.push(task);
               a.capacity += i.fields.customfield_12603;
               added = true;
             }
@@ -627,18 +631,49 @@ function getDEDELCapacityAllocation(){
 
           if(!added){
             var assignee = {};
+            var tasks = [];
+            var task = {};
+            task.key = i.key;
+            task.capacity = i.fields.customfield_12603;
+            tasks.push(task);
             assignee.name = i.fields.assignee.name;
             assignee.displayName = i.fields.assignee.displayName;
             assignee.capacity = i.fields.customfield_12603;
+            assignee.tasks = tasks;
             assignees.push(assignee);
           }
       });
+      datas = [];
+      assignees.map(a => {
+        var data = {};
+        data.name = a.displayName;
+        data.task = "";
+        data.capacity = "";
+        datas.push(data);
+        a.tasks.map(t => {
+          var task = {};
+          task.name = "";
+          task.key = t.key;
+          task.capacity = t.capacity;
+          datas.push(task);
+        })
+        var total = {};
+        total.name = "TOTAL";
+        total.key = "";
+        total.capacity = a.capacity;
+        datas.push(total);
+        var space = {};
+        space.name = "";
+        space.key = "";
+        space.capacity = "";
+        datas.push(space);
+      })
 
       try {
-        fields = ["name", "displayName", "capacity"];
+        fields = ["name", "key", "capacity"];
         var title = 'DEDEL_Capacity_Allocation_' + moment().toISOString() + '.csv';
         
-        var ret = writeCSV(assignees, fields, title);
+        var ret = writeCSV(datas, fields, title);
         
         resolve(ret);
       } catch (e) {
