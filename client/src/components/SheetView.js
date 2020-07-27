@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect} from 'react';
 import LicenseNavbar from './LicenseNavbar';
 import SelectModal from './SelectModal';
 import TableView from './TableView';
 import  FadeIn from 'react-fade-in';
-import { Col, Alert } from 'react-bootstrap';
+import { Col } from 'react-bootstrap';
 
 const SheetView = (props) => {
   const [showBP, setShowBP] = useState(false);
@@ -24,7 +24,7 @@ const SheetView = (props) => {
     })
       .then((res) => res.json())
       .then((result) => {
-        {
+       
           console.log(result);
           setFields(result.message.fields);
           setData(result.message.issues);
@@ -35,10 +35,12 @@ const SheetView = (props) => {
           url = '/server' + result.message.url;
           const link = document.createElement('a');
           link.href = url;
+          //link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(url));
+          //link.setAttribute('download', title);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-        }
+        
       });
   };
 
@@ -50,7 +52,7 @@ const SheetView = (props) => {
     })
       .then((res) => res.json())
       .then((result) => {
-        {
+        
           console.log(result);
           setFields(result.message.fields);
           setData(result.message.issues);
@@ -58,13 +60,16 @@ const SheetView = (props) => {
           setShowDirect(false);
           setShowBP(false);
           setStatus("To Do");
+          console.table(result.message.issues);
           url = '/server' + result.message.url;
           const link = document.createElement('a');
           link.href = url;
+          //link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(url));
+          //link.setAttribute('download', title);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-        }
+        
       });
   };
 

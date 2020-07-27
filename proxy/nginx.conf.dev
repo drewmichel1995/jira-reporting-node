@@ -8,7 +8,7 @@ http {
 	sendfile on;
 	
 	upstream docker-client {
-        server client:5000;
+        server client:3000;
     }
 
 	upstream docker-server {

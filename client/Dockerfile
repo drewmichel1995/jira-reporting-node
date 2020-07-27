@@ -1,13 +1,10 @@
 FROM node:latest
 
-RUN mkdir -p /srv/app/client
-WORKDIR /srv/app/client
+ADD . client
 
-COPY package.json /srv/app/client
-COPY package-lock.json /srv/app/client
+RUN npm install --prefix client
+RUN npm install -g serve
+EXPOSE 5000
 
-RUN npm install
-
-COPY . /srv/app/client
-
-CMD [ "npm", "start" ]
+RUN npm run build --prefix client
+CMD serve -s ./client/build 

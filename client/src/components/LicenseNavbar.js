@@ -1,27 +1,7 @@
 import React from 'react';
-import { Nav, Navbar, NavDropdown, Button } from 'react-bootstrap';
-import ImageHelper from './ImageHelper';
-import SearchContainer from './SearchContainer';
+import { Nav, Navbar } from 'react-bootstrap';
 
 const LicenseNavbar = (props) => {
-  const getfile = () => {
-    var url = '/server/sheet/getfile?name=' + props.currentSheet;
-    fetch(url, {
-      method: 'get',
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        {
-          console.log(result);
-          url = '/server' + result;
-          const link = document.createElement('a');
-          link.href = url;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      });
-  };
 
   return (
     <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">

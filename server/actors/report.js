@@ -620,62 +620,27 @@ function getDEDELCapacityAllocation(){
         
           assignees.map(a => {
             if(a.name == i.fields.assignee.name){
-              var task = {};
-              task.key = i.key;
-              task.capacity = i.fields.customfield_12603;
-              a.tasks.push(task);
+              a.tasks.push({key: i.key, capacity: i.fields.customfield_12603});
               a.capacity += i.fields.customfield_12603;
               added = true;
             }
           })
 
-          if(!added){
-            var assignee = {};
-            var tasks = [];
-            var task = {};
-            task.key = i.key;
-            task.capacity = i.fields.customfield_12603;
-            tasks.push(task);
-            assignee.name = i.fields.assignee.name;
-            assignee.displayName = i.fields.assignee.displayName;
-            assignee.capacity = i.fields.customfield_12603;
-            assignee.tasks = tasks;
-            assignees.push(assignee);
-          }
+          if(!added) assignees.push({name: i.fields.assignee.name, displayName: i.fields.assignee.displayName, capacity: i.fields.customfield_12603, tasks: [{key: i.key, capacity: i.fields.customfield_12603}]});
+          
       });
+
       datas = [];
       assignees.map(a => {
-        var data = {};
-        data.name = a.displayName;
-        data.task = "";
-        data.capacity = "";
-        datas.push(data);
-        a.tasks.map(t => {
-          var task = {};
-          task.name = "";
-          task.key = t.key;
-          task.capacity = t.capacity;
-          datas.push(task);
-        })
-        var total = {};
-        total.name = "TOTAL";
-        total.key = "";
-        total.capacity = a.capacity;
-        datas.push(total);
-        var space = {};
-        space.name = "";
-        space.key = "";
-        space.capacity = "";
-        datas.push(space);
+        datas = [...datas, {name: a.displayName, task: "", capacity: ""}];
+        a.tasks.map(t => { datas = [...datas, {name: "", key: t.key, capacity: t.capacity}];})
+        datas = [...datas, {name: "TOTAL", key: "", capacity: a.capacity}, {name: "", key: "", capacity: ""}];
       })
 
       try {
-        fields = ["name", "key", "capacity"];
-        var title = 'DEDEL_Capacity_Allocation_' + moment().toISOString() + '.csv';
-        
-        var ret = writeCSV(datas, fields, title);
-        
+        var ret = writeCSV(datas, ["name", "key", "capacity"], 'DEDEL_Capacity_Allocation_' + moment().toISOString() + '.csv');
         resolve(ret);
+        
       } catch (e) {
         reject(e.message);
       }
