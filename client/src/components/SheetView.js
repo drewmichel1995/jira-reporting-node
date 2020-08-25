@@ -3,6 +3,7 @@ import LicenseNavbar from './LicenseNavbar';
 import SelectModal from './SelectModal';
 import TableView from './TableView';
 import  FadeIn from 'react-fade-in';
+import Loading from './Loading/Loading';
 import { Col } from 'react-bootstrap';
 
 const SheetView = (props) => {
@@ -12,6 +13,8 @@ const SheetView = (props) => {
   const [fields, setFields] = useState([]);
   const [data, setData] = useState([]);
   const [title, setTitle] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(true);
   useEffect(() => {
     
   });
@@ -42,6 +45,26 @@ const SheetView = (props) => {
           document.body.removeChild(link);
         
       });
+  };
+
+  const getWeeklyReport = (type) => {
+    var url = '/server/jira/';
+    setDone(false);
+    setLoading(true);
+
+    fetch(url, {
+      method: 'get',
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        setLoading(false);
+        setTimeout(function(){
+          setDone(true);
+          window.open( 
+            result.message, "_blank");
+          });
+        }, 3000);
+        
   };
 
   const getCapacityReport = () => {
@@ -81,7 +104,8 @@ const SheetView = (props) => {
 
   return (
     <div>
-      <LicenseNavbar showBP={setShowBP} BP={showBP} showDirect={setShowDirect} Direct={showDirect} getCapacityReport={getCapacityReport}></LicenseNavbar>
+      <LicenseNavbar showBP={setShowBP} BP={showBP} showDirect={setShowDirect} Direct={showDirect} getCapacityReport={getCapacityReport} getWeeklyReport={getWeeklyReport}></LicenseNavbar>
+        {!done && <Loading loading={loading} />}
         <FadeIn><SelectModal show={showBP} title={`Pre-B&P/B&P Report`} body="Select status for report." mode="confirm" firstText="Get Report" firstButton={() => getReport("DEDELBP")} secondText="Cancel" secondButton={setCancel} setStatus={(value) => setStatus(value)}></SelectModal></FadeIn>
       
         <FadeIn><SelectModal show={showDirect} title={`Direct Report`} body="Select status for report." mode="confirm" firstText="Get Report" firstButton={() => getReport("DEDELDirect")} secondText="Cancel" secondButton={setCancel} setStatus={(value) => setStatus(value)}></SelectModal></FadeIn>

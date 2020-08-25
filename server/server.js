@@ -29,6 +29,8 @@ process.on('SIGINT', function onSigint() {
   };
 
   //"0 10 * * 1"
+  //30 15 * * *
+  //"0 22 * * 1"
   cron.schedule("0 22 * * 1", function() {
     console.log("---------------------");
     console.log("Running Weekly Reporting Cron Job");
@@ -36,7 +38,7 @@ process.on('SIGINT', function onSigint() {
         console.log("Weekly Reporting Cron Job Finished");
         console.log("---------------------");
     })
-    report.getWeeklyReport();
+    //report.getWeeklyReport();
   });
 
 app.listen(3000, () => console.log("Success! Server Running at Port 3000."));

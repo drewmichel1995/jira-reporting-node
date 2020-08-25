@@ -19,6 +19,9 @@ const LicenseNavbar = (props) => {
             <Nav.Link onClick={() => { props.getCapacityReport() }}>
               {`Capacity Allocation Report`}
             </Nav.Link>
+            <Nav.Link onClick={() => { props.getWeeklyReport() }}>
+              {`Weekly Report`}
+            </Nav.Link>
         </Nav>
       </Navbar.Collapse>
     </Navbar>

@@ -40,6 +40,7 @@ const getWeeklyReport = () => {
 
               executePost(generateReport(sorted)).then(response4 => {
                 try {
+                    console.log(response4)
                     const parsedData = response4;
                     resolve(parsedData);
                   } catch (e) {
@@ -424,8 +425,11 @@ function executePost(html){
 
       res.on('end', () => {
         try {
-          const parsedData = res.statusCode;
-          if(parsedData != 200){
+          //const parsedData = res.statusCode;
+          console.log(data);
+          var jsonData = JSON.parse(data);
+          const parsedData = "https://confluence.devops.saicwebhost.net/pages/viewpage.action?pageId=" + jsonData.id;
+          if(res.statusCode != 200){
             console.log("Error Posting Report on " + start.toString());
           }else{
             console.log("Report Successfully Posted on " + start.toString());
